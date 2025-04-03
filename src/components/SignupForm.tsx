@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserPlus } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 const SignupForm = () => {
   const [name, setName] = useState('');
@@ -16,6 +17,7 @@ const SignupForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const validatePassword = () => {
     if (password !== confirmPassword) {
@@ -40,6 +42,7 @@ const SignupForm = () => {
       navigate('/dashboard');
     } catch (error) {
       console.error(error);
+      // Error is already handled in the signup function
     } finally {
       setIsLoading(false);
     }

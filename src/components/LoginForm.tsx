@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { LogIn } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +26,7 @@ const LoginForm = () => {
       navigate('/dashboard');
     } catch (error) {
       console.error(error);
+      // Error is already handled in the login function
     } finally {
       setIsLoading(false);
     }
@@ -82,9 +85,6 @@ const LoginForm = () => {
         >
           Sign up
         </a>
-      </div>
-      <div className="text-center text-xs text-muted-foreground">
-        <p>Demo login: demo@example.com / password123</p>
       </div>
     </form>
   );
