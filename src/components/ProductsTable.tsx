@@ -28,80 +28,80 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductWithPrice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  useEffect(() => {
-    async function fetchProducts() {
-      setLoading(true);
-      try {
-        // This query gets all products with their latest price
-        const { data, error } = await supabase
-          .from('product')
-          .select(`
-            prodcode,
-            description,
-            unit,
-            pricehist!inner (
-              unitprice,
-              effdate
-            )
-          `)
-          .order('prodcode');
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      // This query gets all products with their latest price
+      const { data, error } = await supabase
+        .from('product')
+        .select(`
+          prodcode,
+          description,
+          unit,
+          pricehist!inner (
+            unitprice,
+            effdate
+          )
+        `)
+        .order('prodcode');
+      
+      if (error) throw error;
+      
+      // Process the data to get the latest price for each product
+      const processedProducts: ProductWithPrice[] = [];
+      const productMap = new Map<string, ProductWithPrice>();
+      
+      data.forEach(product => {
+        // For each product, find the pricehist with the most recent date
+        const prices = product.pricehist;
         
-        if (error) throw error;
-        
-        // Process the data to get the latest price for each product
-        const processedProducts: ProductWithPrice[] = [];
-        const productMap = new Map<string, ProductWithPrice>();
-        
-        data.forEach(product => {
-          // For each product, find the pricehist with the most recent date
-          const prices = product.pricehist;
+        // If there are prices, find the latest one
+        if (prices && prices.length > 0) {
+          // Sort by date descending to get latest price
+          const sortedPrices = [...prices].sort((a, b) => 
+            new Date(b.effdate).getTime() - new Date(a.effdate).getTime()
+          );
           
-          // If there are prices, find the latest one
-          if (prices && prices.length > 0) {
-            // Sort by date descending to get latest price
-            const sortedPrices = [...prices].sort((a, b) => 
-              new Date(b.effdate).getTime() - new Date(a.effdate).getTime()
-            );
-            
-            const latestPrice = sortedPrices[0];
-            
-            const productWithPrice: ProductWithPrice = {
-              prodcode: product.prodcode,
-              description: product.description || '',
-              unit: product.unit || '',
-              currentPrice: latestPrice.unitprice,
-              latestPriceDate: latestPrice.effdate
-            };
-            
-            // Store in map to ensure uniqueness by prodcode
-            productMap.set(product.prodcode, productWithPrice);
-          } else {
-            // Product with no price history
-            const productWithPrice: ProductWithPrice = {
-              prodcode: product.prodcode,
-              description: product.description || '',
-              unit: product.unit || '',
-              currentPrice: null,
-              latestPriceDate: null
-            };
-            productMap.set(product.prodcode, productWithPrice);
-          }
-        });
-        
-        // Convert map to array
-        Array.from(productMap.values()).forEach(product => {
-          processedProducts.push(product);
-        });
-        
-        setProducts(processedProducts);
-      } catch (error: any) {
-        console.error('Error fetching products:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
+          const latestPrice = sortedPrices[0];
+          
+          const productWithPrice: ProductWithPrice = {
+            prodcode: product.prodcode,
+            description: product.description || '',
+            unit: product.unit || '',
+            currentPrice: latestPrice.unitprice,
+            latestPriceDate: latestPrice.effdate
+          };
+          
+          // Store in map to ensure uniqueness by prodcode
+          productMap.set(product.prodcode, productWithPrice);
+        } else {
+          // Product with no price history
+          const productWithPrice: ProductWithPrice = {
+            prodcode: product.prodcode,
+            description: product.description || '',
+            unit: product.unit || '',
+            currentPrice: null,
+            latestPriceDate: null
+          };
+          productMap.set(product.prodcode, productWithPrice);
+        }
+      });
+      
+      // Convert map to array
+      Array.from(productMap.values()).forEach(product => {
+        processedProducts.push(product);
+      });
+      
+      setProducts(processedProducts);
+    } catch (error: any) {
+      console.error('Error fetching products:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-    
+  };
+  
+  useEffect(() => {
     fetchProducts();
   }, []);
   
@@ -131,6 +131,8 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
   
   const handleDialogClose = () => {
     setIsDialogOpen(false);
+    // Refresh products data to update current prices
+    fetchProducts();
   };
   
   if (loading) {
