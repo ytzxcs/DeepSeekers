@@ -9,9 +9,31 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Edit, Trash2 } from 'lucide-react';
 import PriceHistoryDialog from './PriceHistoryDialog';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useToast } from '@/components/ui/use-toast';
 
 interface ProductWithPrice {
   prodcode: string;
@@ -21,12 +43,22 @@ interface ProductWithPrice {
   latestPriceDate: string | null;
 }
 
-export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
+interface ProductsTableProps {
+  searchQuery: string;
+  refreshTrigger?: number;
+  onRefresh?: () => void;
+}
+
+export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: ProductsTableProps) => {
   const [products, setProducts] = useState<ProductWithPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithPrice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductWithPrice | null>(null);
+  const { toast } = useToast();
   
   const fetchProducts = async () => {
     setLoading(true);
@@ -38,7 +70,7 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
           prodcode,
           description,
           unit,
-          pricehist!inner (
+          pricehist (
             unitprice,
             effdate
           )
@@ -103,7 +135,7 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
   
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [refreshTrigger]);
   
   // Filter products based on search query
   const filteredProducts = products.filter(product => {
@@ -133,6 +165,87 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
     setIsDialogOpen(false);
     // Refresh products data to update current prices
     fetchProducts();
+    if (onRefresh) onRefresh();
+  };
+
+  const handleEditClick = (e: React.MouseEvent, product: ProductWithPrice) => {
+    e.stopPropagation(); // Prevent row click handler
+    setEditingProduct({ ...product });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, product: ProductWithPrice) => {
+    e.stopPropagation(); // Prevent row click handler
+    setSelectedProduct(product);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingProduct) return;
+
+    try {
+      const { error } = await supabase
+        .from('product')
+        .update({
+          description: editingProduct.description,
+          unit: editingProduct.unit
+        })
+        .eq('prodcode', editingProduct.prodcode);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product updated successfully"
+      });
+      
+      setIsEditDialogOpen(false);
+      fetchProducts();
+      if (onRefresh) onRefresh();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update product",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!selectedProduct) return;
+
+    try {
+      // First delete price history
+      const { error: priceHistError } = await supabase
+        .from('pricehist')
+        .delete()
+        .eq('prodcode', selectedProduct.prodcode);
+
+      if (priceHistError) throw priceHistError;
+      
+      // Then delete the product
+      const { error: productError } = await supabase
+        .from('product')
+        .delete()
+        .eq('prodcode', selectedProduct.prodcode);
+
+      if (productError) throw productError;
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully"
+      });
+      
+      setIsDeleteDialogOpen(false);
+      fetchProducts();
+      if (onRefresh) onRefresh();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete product",
+        variant: "destructive"
+      });
+    }
   };
   
   if (loading) {
@@ -167,12 +280,13 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
               <TableHead>Unit</TableHead>
               <TableHead className="text-right">Current Price</TableHead>
               <TableHead className="text-right">Last Updated</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                   No products matching your search
                 </TableCell>
               </TableRow>
@@ -192,6 +306,25 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
                       ? new Date(product.latestPriceDate).toLocaleDateString() 
                       : 'N/A'}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={(e) => handleEditClick(e, product)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={(e) => handleDeleteClick(e, product)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -207,6 +340,73 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
           onClose={handleDialogClose}
         />
       )}
+
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-prodcode">Product Code</Label>
+              <Input 
+                id="edit-prodcode" 
+                value={editingProduct?.prodcode || ''}
+                disabled
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Input 
+                id="edit-description" 
+                value={editingProduct?.description || ''}
+                onChange={(e) => setEditingProduct(prev => 
+                  prev ? { ...prev, description: e.target.value } : null
+                )}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-unit">Unit</Label>
+              <Input 
+                id="edit-unit" 
+                value={editingProduct?.unit || ''}
+                onChange={(e) => setEditingProduct(prev => 
+                  prev ? { ...prev, unit: e.target.value } : null
+                )}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the product "{selectedProduct?.description || selectedProduct?.prodcode}" and all its price history.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteProduct}
+              className="bg-destructive text-destructive-foreground"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
