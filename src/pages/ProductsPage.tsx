@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PlusCircle, Search, Edit, Trash2, Table2, Grid3X3 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -18,6 +17,62 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { useProducts } from '@/contexts/ProductContext';
+import { Card, CardContent } from '@/components/ui/card';
+
+const ProductGrid = ({ 
+  products, 
+  searchQuery, 
+  onEdit, 
+  onDelete 
+}: { 
+  products: any[]; 
+  searchQuery: string; 
+  onEdit: (product: any) => void; 
+  onDelete: (id: string) => void; 
+}) => {
+  const filteredProducts = products.filter(
+    product => product.prodcode.toLowerCase().includes(searchQuery.toLowerCase()) || 
+               product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (filteredProducts.length === 0) {
+    return <div className="text-center py-8">No products found</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {filteredProducts.map((product) => (
+        <Card key={product.prodcode} className="overflow-hidden">
+          <div className="aspect-square bg-gray-100 relative">
+            <img 
+              src={`https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=500&h=500&fit=crop`} 
+              alt={product.description || product.prodcode}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <CardContent className="p-4">
+            <h3 className="font-semibold mb-1">{product.prodcode}</h3>
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+              {product.description || 'No description'}
+            </p>
+            <div className="text-sm text-muted-foreground">Unit: {product.unit || 'N/A'}</div>
+            <div className="flex space-x-2 mt-3">
+              <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => onDelete(product.prodcode)}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
 
 const ProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +85,7 @@ const ProductsPage = () => {
   });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { toast } = useToast();
+  const { products: contextProducts } = useProducts();
 
   const handleAddProduct = async () => {
     if (!newProduct.prodcode) {
@@ -65,10 +121,17 @@ const ProductsPage = () => {
     }
   };
 
+  const handleEditProduct = (product: any) => {
+    console.log("Edit product:", product);
+  };
+
+  const handleDeleteProduct = (id: string) => {
+    console.log("Delete product:", id);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header with title and breadcrumb */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Products Catalog</h1>
           <div className="text-sm text-muted-foreground mt-1">
@@ -78,9 +141,7 @@ const ProductsPage = () => {
 
         <Separator />
         
-        {/* Action bar */}
         <div className="flex flex-col sm:flex-row justify-between gap-4">
-          {/* Search and filters */}
           <div className="flex flex-1 items-center gap-2">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -112,7 +173,6 @@ const ProductsPage = () => {
             </div>
           </div>
           
-          {/* Add product button */}
           <Button 
             className="flex items-center gap-2"
             onClick={() => setIsAddDialogOpen(true)}
@@ -122,7 +182,6 @@ const ProductsPage = () => {
           </Button>
         </div>
         
-        {/* Products display */}
         <div className="bg-white rounded-lg border shadow-sm">
           <div className="p-4 border-b">
             <h2 className="text-lg font-medium">Product Inventory</h2>
@@ -131,18 +190,25 @@ const ProductsPage = () => {
             </p>
           </div>
           
-          {/* Products Table */}
           <div className="p-4">
-            <ProductsTable 
-              searchQuery={searchQuery} 
-              refreshTrigger={refreshTrigger} 
-              onRefresh={() => setRefreshTrigger(prev => prev + 1)} 
-            />
+            {viewMode === 'list' ? (
+              <ProductsTable 
+                searchQuery={searchQuery} 
+                refreshTrigger={refreshTrigger} 
+                onRefresh={() => setRefreshTrigger(prev => prev + 1)} 
+              />
+            ) : (
+              <ProductGrid 
+                products={contextProducts} 
+                searchQuery={searchQuery} 
+                onEdit={handleEditProduct}
+                onDelete={handleDeleteProduct}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* Add Product Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>

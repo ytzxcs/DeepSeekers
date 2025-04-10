@@ -10,7 +10,6 @@ import {
   Package,
   DollarSign,
   Clock,
-  Zap,
   TrendingUp,
   TrendingDown,
   ShoppingCart,
@@ -19,6 +18,13 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const DashboardPage = () => {
   const { products } = useProducts();
@@ -174,6 +180,7 @@ const DashboardPage = () => {
                 <TabsList>
                   <TabsTrigger value="recent-products">Recent Products</TabsTrigger>
                   <TabsTrigger value="price-changes">Price Changes</TabsTrigger>
+                  <TabsTrigger value="all-products">All Products</TabsTrigger>
                 </TabsList>
                 <Button 
                   variant="outline" 
@@ -186,9 +193,11 @@ const DashboardPage = () => {
 
               <TabsContent value="recent-products" className="mt-6 space-y-4">
                 {recentProducts.length > 0 ? (
-                  recentProducts.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))
+                  <div className="space-y-4">
+                    {recentProducts.map(product => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     No products available
@@ -205,9 +214,13 @@ const DashboardPage = () => {
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-md overflow-hidden bg-muted">
                               <img 
-                                src={product.imageUrl} 
+                                src={product.imageUrl || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9'} 
                                 alt={product.name} 
                                 className="w-full h-full object-cover" 
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9';
+                                }}
                               />
                             </div>
                             <div>
@@ -253,6 +266,30 @@ const DashboardPage = () => {
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     No price changes to display
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="all-products" className="mt-6">
+                {products.length > 0 ? (
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {products.map((product) => (
+                        <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
+                          <div className="p-1">
+                            <ProductCard product={product} />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <div className="flex justify-center mt-4">
+                      <CarouselPrevious className="static translate-y-0 mr-2" />
+                      <CarouselNext className="static translate-y-0" />
+                    </div>
+                  </Carousel>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No products available
                   </div>
                 )}
               </TabsContent>
