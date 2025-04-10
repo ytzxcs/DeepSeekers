@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import PriceHistoryDialog from './PriceHistoryDialog';
 
 interface ProductWithPrice {
   prodcode: string;
@@ -24,6 +25,8 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
   const [products, setProducts] = useState<ProductWithPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductWithPrice | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   useEffect(() => {
     async function fetchProducts() {
@@ -121,6 +124,15 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
     }).format(price);
   };
   
+  const handleProductClick = (product: ProductWithPrice) => {
+    setSelectedProduct(product);
+    setIsDialogOpen(true);
+  };
+  
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+  };
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -138,47 +150,62 @@ export const ProductsTable = ({ searchQuery }: { searchQuery: string }) => {
   }
   
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableCaption>
-          {filteredProducts.length === 0 
-            ? 'No products found' 
-            : `Showing ${filteredProducts.length} of ${products.length} products`}
-        </TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Product Code</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Unit</TableHead>
-            <TableHead className="text-right">Current Price</TableHead>
-            <TableHead className="text-right">Last Updated</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredProducts.length === 0 ? (
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableCaption>
+            {filteredProducts.length === 0 
+              ? 'No products found' 
+              : `Showing ${filteredProducts.length} of ${products.length} products`}
+          </TableCaption>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                No products matching your search
-              </TableCell>
+              <TableHead>Product Code</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Unit</TableHead>
+              <TableHead className="text-right">Current Price</TableHead>
+              <TableHead className="text-right">Last Updated</TableHead>
             </TableRow>
-          ) : (
-            filteredProducts.map((product) => (
-              <TableRow key={product.prodcode}>
-                <TableCell className="font-medium">{product.prodcode}</TableCell>
-                <TableCell>{product.description || 'N/A'}</TableCell>
-                <TableCell>{product.unit || 'N/A'}</TableCell>
-                <TableCell className="text-right">{formatPrice(product.currentPrice)}</TableCell>
-                <TableCell className="text-right">
-                  {product.latestPriceDate 
-                    ? new Date(product.latestPriceDate).toLocaleDateString() 
-                    : 'N/A'}
+          </TableHeader>
+          <TableBody>
+            {filteredProducts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                  No products matching your search
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ) : (
+              filteredProducts.map((product) => (
+                <TableRow 
+                  key={product.prodcode} 
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => handleProductClick(product)}
+                >
+                  <TableCell className="font-medium">{product.prodcode}</TableCell>
+                  <TableCell>{product.description || 'N/A'}</TableCell>
+                  <TableCell>{product.unit || 'N/A'}</TableCell>
+                  <TableCell className="text-right">{formatPrice(product.currentPrice)}</TableCell>
+                  <TableCell className="text-right">
+                    {product.latestPriceDate 
+                      ? new Date(product.latestPriceDate).toLocaleDateString() 
+                      : 'N/A'}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      {selectedProduct && (
+        <PriceHistoryDialog 
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          product={selectedProduct}
+          onClose={handleDialogClose}
+        />
+      )}
+    </>
   );
 };
 
