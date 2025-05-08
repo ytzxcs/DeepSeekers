@@ -14,6 +14,7 @@ export interface UserPermissions {
   edit_price_history: boolean;
   delete_price_history: boolean;
   add_price_history: boolean;
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -27,6 +28,7 @@ interface PermissionsContextType {
   canAddPriceHistory: boolean;
   canEditPriceHistory: boolean;
   canDeletePriceHistory: boolean;
+  isAdmin: boolean;
 }
 
 const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
@@ -90,7 +92,8 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({
               add_product: false,
               edit_price_history: false,
               delete_price_history: false,
-              add_price_history: false
+              add_price_history: false,
+              is_admin: false
             }
           ])
           .select()
@@ -132,6 +135,7 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({
   const canAddPriceHistory = permissions?.add_price_history || false;
   const canEditPriceHistory = permissions?.edit_price_history || false;
   const canDeletePriceHistory = permissions?.delete_price_history || false;
+  const isAdmin = permissions?.is_admin || false;
 
   return (
     <PermissionsContext.Provider 
@@ -144,7 +148,8 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({
         canDeleteProduct,
         canAddPriceHistory,
         canEditPriceHistory,
-        canDeletePriceHistory
+        canDeletePriceHistory,
+        isAdmin
       }}
     >
       {children}

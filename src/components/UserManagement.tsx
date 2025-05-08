@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -57,7 +56,8 @@ const UserManagement = () => {
     add_product: false,
     edit_price_history: false,
     delete_price_history: false,
-    add_price_history: false
+    add_price_history: false,
+    is_admin: false
   });
   const { toast } = useToast();
 
@@ -125,6 +125,7 @@ const UserManagement = () => {
             edit_price_history: newUser.edit_price_history,
             delete_price_history: newUser.delete_price_history,
             add_price_history: newUser.add_price_history,
+            is_admin: newUser.is_admin
           }
         ])
         .select();
@@ -144,7 +145,8 @@ const UserManagement = () => {
         add_product: false,
         edit_price_history: false,
         delete_price_history: false,
-        add_price_history: false
+        add_price_history: false,
+        is_admin: false
       });
       fetchUsers();
     } catch (error: any) {
@@ -170,6 +172,7 @@ const UserManagement = () => {
           edit_price_history: selectedUser.edit_price_history,
           delete_price_history: selectedUser.delete_price_history,
           add_price_history: selectedUser.add_price_history,
+          is_admin: selectedUser.is_admin
         })
         .eq('id', selectedUser.id);
 
@@ -268,13 +271,14 @@ const UserManagement = () => {
                 <TableHead>Edit Price History</TableHead>
                 <TableHead>Delete Price History</TableHead>
                 <TableHead>Add Price History</TableHead>
+                <TableHead>Admin</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-4 text-muted-foreground">
                     No users found
                   </TableCell>
                 </TableRow>
@@ -288,6 +292,7 @@ const UserManagement = () => {
                     <TableCell>{user.edit_price_history ? "YES" : "NO"}</TableCell>
                     <TableCell>{user.delete_price_history ? "YES" : "NO"}</TableCell>
                     <TableCell>{user.add_price_history ? "YES" : "NO"}</TableCell>
+                    <TableCell>{user.is_admin ? "YES" : "NO"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
@@ -374,6 +379,15 @@ const UserManagement = () => {
                   onCheckedChange={(checked) => setNewUser({...newUser, delete_price_history: checked})}
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="is-admin" className="font-bold text-primary">Is Admin</Label>
+                <Switch
+                  id="is-admin"
+                  checked={newUser.is_admin}
+                  onCheckedChange={(checked) => setNewUser({...newUser, is_admin: checked})}
+                  className="data-[state=checked]:bg-primary"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -442,6 +456,15 @@ const UserManagement = () => {
                   id="edit-delete-price-history"
                   checked={selectedUser.delete_price_history}
                   onCheckedChange={(checked) => setSelectedUser({...selectedUser, delete_price_history: checked})}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="edit-is-admin" className="font-bold text-primary">Is Admin</Label>
+                <Switch
+                  id="edit-is-admin"
+                  checked={selectedUser.is_admin || false}
+                  onCheckedChange={(checked) => setSelectedUser({...selectedUser, is_admin: checked})}
+                  className="data-[state=checked]:bg-primary"
                 />
               </div>
             </div>

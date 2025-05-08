@@ -11,10 +11,12 @@ import ProductsPage from "./pages/ProductsPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProductProvider } from "./contexts/ProductContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
 import UserManagementPage from "./pages/UserManagementPage";
+import AdminPage from "./pages/AdminPage";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,12 @@ const App = () => (
                   <ProtectedRoute>
                     <UserManagementPage />
                   </ProtectedRoute>
+                } />
+                
+                <Route path="/admin" element={
+                  <AdminRoute>
+                    <AdminPage />
+                  </AdminRoute>
                 } />
                 
                 <Route path="*" element={<NotFound />} />
