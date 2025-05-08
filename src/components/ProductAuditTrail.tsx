@@ -10,14 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2, User } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 interface ProductAudit {
@@ -89,100 +82,52 @@ const ProductAuditTrail = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Product Audit Trail</h2>
-          <p className="text-muted-foreground">
-            Track all product changes including soft deletes
-          </p>
-        </div>
-        
-        <div className="flex space-x-2">
-          {uniqueUsers.map(username => (
-            <button
-              key={username}
-              onClick={() => filterByUser(username)}
-              className={`px-3 py-1 rounded-full text-sm flex items-center ${
-                currentUserFilter === username 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-secondary text-secondary-foreground'
-              }`}
-            >
-              <User className="h-3 w-3 mr-1" />
-              {username}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {currentUserFilter && (
-        <div className="bg-muted p-3 rounded-md">
-          <p className="font-medium">
-            Showing actions by: {currentUserFilter}
-            <button 
-              onClick={() => setCurrentUserFilter(null)}
-              className="text-primary text-sm ml-2 hover:underline"
-            >
-              Clear filter
-            </button>
-          </p>
-        </div>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Product Change History</CardTitle>
-          <CardDescription>
-            Complete history of all product modifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
+      {uniqueUsers.map(username => (
+        <div key={username} className="space-y-4">
+          <h2 className="text-lg font-bold">
+            Only soft Delete POV {username}
+          </h2>
+          
+          <Table className="border-collapse border">
             <TableHeader>
               <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead>Performed By</TableHead>
+                <TableHead className="border font-bold">Product</TableHead>
+                <TableHead className="border font-bold text-red-500">Status</TableHead>
+                <TableHead className="border font-bold">Stamp</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAuditTrail.length === 0 ? (
+              {filteredAuditTrail.length === 0 || (currentUserFilter && currentUserFilter !== username) ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                    No audit trail records found
+                  <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                    No records found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAuditTrail.map((record) => (
+                (currentUserFilter === username || !currentUserFilter ? 
+                  filteredAuditTrail.filter(record => record.performed_by === username) : [])
+                  .map((record) => (
                   <TableRow key={record.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="border">
                       {record.product_name}
                     </TableCell>
-                    <TableCell>
-                      <span 
-                        className={`px-2 py-1 rounded-md text-xs font-medium ${
-                          record.action === 'ADDED' 
-                            ? 'bg-green-100 text-green-800'
-                            : record.action === 'EDITED'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {record.action}
-                      </span>
+                    <TableCell className={`border ${
+                      record.action === 'DELETED' ? 'text-red-500' : 
+                      record.action === 'EDITED' ? 'text-blue-500' : 
+                      'text-green-500'
+                    }`}>
+                      {record.action}
                     </TableCell>
-                    <TableCell>
-                      {format(new Date(record.timestamp), 'yyyy-MMM-dd HH:mm:ss')}
+                    <TableCell className="border">
+                      {record.performed_by} {format(new Date(record.timestamp), 'yyyy-MMM-dd HH:mm a')}
                     </TableCell>
-                    <TableCell>{record.performed_by}</TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      ))}
     </div>
   );
 };
