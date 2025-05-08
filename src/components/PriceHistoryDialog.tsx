@@ -37,6 +37,7 @@ import { Calendar } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { supabase } from '@/integrations/supabase/client';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface PriceHistoryItem {
   effdate: string;
@@ -74,6 +75,7 @@ const PriceHistoryDialog = ({
   const [newDate, setNewDate] = useState<Date | undefined>(new Date());
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { canEditPriceHistory, canDeletePriceHistory, canAddPriceHistory } = usePermissions();
 
   useEffect(() => {
     if (open && product) {
@@ -106,6 +108,15 @@ const PriceHistoryDialog = ({
   };
 
   const handleAddPrice = async () => {
+    if (!canAddPriceHistory) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to add price history",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!newPrice || !newDate) {
       toast({
         title: 'Error',
@@ -155,6 +166,15 @@ const PriceHistoryDialog = ({
   };
 
   const handleEditPrice = async () => {
+    if (!canEditPriceHistory) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to edit price history",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!selectedPrice || !newPrice || !newDate) {
       toast({
         title: 'Error',
@@ -208,6 +228,15 @@ const PriceHistoryDialog = ({
   };
 
   const handleDeletePrice = async () => {
+    if (!canDeletePriceHistory) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to delete price history",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!selectedPrice) return;
 
     try {
@@ -239,6 +268,15 @@ const PriceHistoryDialog = ({
   };
 
   const startEditPrice = (price: PriceHistoryItem) => {
+    if (!canEditPriceHistory) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to edit price history",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedPrice(price);
     setNewPrice(price.unitprice.toString());
     setNewDate(new Date(price.effdate));
@@ -246,6 +284,15 @@ const PriceHistoryDialog = ({
   };
 
   const confirmDeletePrice = (price: PriceHistoryItem) => {
+    if (!canDeletePriceHistory) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to delete price history",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedPrice(price);
     setDeleteDialogOpen(true);
   };
@@ -273,7 +320,9 @@ const PriceHistoryDialog = ({
                 <p className="text-sm text-muted-foreground">Product Code: <span className="font-medium text-foreground">{product?.prodcode}</span></p>
                 <p className="text-sm text-muted-foreground">Current Price: <span className="font-medium text-foreground">{product?.currentPrice !== null ? formatPrice(product.currentPrice) : 'N/A'}</span></p>
               </div>
-              <Button onClick={() => setIsAddingPrice(true)}>Add New Price</Button>
+              {canAddPriceHistory && (
+                <Button onClick={() => setIsAddingPrice(true)}>Add New Price</Button>
+              )}
             </div>
             
             <Tabs defaultValue="history">
@@ -307,20 +356,24 @@ const PriceHistoryDialog = ({
                             <TableCell>{formatPrice(price.unitprice)}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => startEditPrice(price)}
-                                >
-                                  Edit
-                                </Button>
-                                <Button 
-                                  variant="destructive" 
-                                  size="sm"
-                                  onClick={() => confirmDeletePrice(price)}
-                                >
-                                  Delete
-                                </Button>
+                                {canEditPriceHistory && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => startEditPrice(price)}
+                                  >
+                                    Edit
+                                  </Button>
+                                )}
+                                {canDeletePriceHistory && (
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    onClick={() => confirmDeletePrice(price)}
+                                  >
+                                    Delete
+                                  </Button>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>

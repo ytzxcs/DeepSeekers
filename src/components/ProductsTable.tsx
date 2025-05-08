@@ -34,6 +34,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/components/ui/use-toast';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface ProductWithPrice {
   prodcode: string;
@@ -59,6 +60,7 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithPrice | null>(null);
   const { toast } = useToast();
+  const { canEditProduct, canDeleteProduct } = usePermissions();
   
   const fetchProducts = async () => {
     setLoading(true);
@@ -169,19 +171,39 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
   };
 
   const handleEditClick = (e: React.MouseEvent, product: ProductWithPrice) => {
+    if (!canEditProduct) {
+      e.stopPropagation();
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to edit products",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     e.stopPropagation(); // Prevent row click handler
     setEditingProduct({ ...product });
     setIsEditDialogOpen(true);
   };
 
   const handleDeleteClick = (e: React.MouseEvent, product: ProductWithPrice) => {
+    if (!canDeleteProduct) {
+      e.stopPropagation();
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to delete products",
+        variant: "destructive"
+      });
+      return;
+    }
+
     e.stopPropagation(); // Prevent row click handler
     setSelectedProduct(product);
     setIsDeleteDialogOpen(true);
   };
 
   const handleSaveEdit = async () => {
-    if (!editingProduct) return;
+    if (!editingProduct || !canEditProduct) return;
 
     try {
       const { error } = await supabase
@@ -212,7 +234,7 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
   };
 
   const handleDeleteProduct = async () => {
-    if (!selectedProduct) return;
+    if (!selectedProduct || !canDeleteProduct) return;
 
     try {
       // First delete price history
@@ -308,21 +330,25 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={(e) => handleEditClick(e, product)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={(e) => handleDeleteClick(e, product)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {canEditProduct && (
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={(e) => handleEditClick(e, product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDeleteProduct && (
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={(e) => handleDeleteClick(e, product)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

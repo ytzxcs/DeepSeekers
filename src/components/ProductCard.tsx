@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +13,7 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const navigate = useNavigate();
+  const { canEditProduct } = usePermissions();
   
   // Price trend calculation
   const priceHistory = product.priceHistory;
@@ -84,11 +86,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button 
-          variant="outline" 
+          variant={canEditProduct ? "default" : "outline"}
           className="w-full"
           onClick={() => navigate(`/products/${product.id}`)}
         >
-          View Details
+          {canEditProduct ? 'View & Edit' : 'View Details'}
         </Button>
       </CardFooter>
     </Card>

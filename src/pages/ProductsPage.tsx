@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { PlusCircle, Search, Edit, Trash2, Table2, Grid3X3 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -19,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { useProducts } from '@/contexts/ProductContext';
 import { Card, CardContent } from '@/components/ui/card';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 const ProductGrid = ({ 
   products, 
@@ -31,6 +33,8 @@ const ProductGrid = ({
   onEdit: (product: any) => void; 
   onDelete: (id: string) => void; 
 }) => {
+  const { canEditProduct, canDeleteProduct } = usePermissions();
+  
   const filteredProducts = products.filter(
     product => product.prodcode.toLowerCase().includes(searchQuery.toLowerCase()) || 
                product.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -58,14 +62,18 @@ const ProductGrid = ({
             </p>
             <div className="text-sm text-muted-foreground">Unit: {product.unit || 'N/A'}</div>
             <div className="flex space-x-2 mt-3">
-              <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => onDelete(product.prodcode)}>
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
-              </Button>
+              {canEditProduct && (
+                <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+              {canDeleteProduct && (
+                <Button variant="destructive" size="sm" onClick={() => onDelete(product.prodcode)}>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -86,8 +94,18 @@ const ProductsPage = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { toast } = useToast();
   const { products: contextProducts } = useProducts();
+  const { canAddProduct, canEditProduct, canDeleteProduct } = usePermissions();
 
   const handleAddProduct = async () => {
+    if (!canAddProduct) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to add products",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!newProduct.prodcode) {
       toast({
         title: "Error",
@@ -173,13 +191,15 @@ const ProductsPage = () => {
             </div>
           </div>
           
-          <Button 
-            className="flex items-center gap-2"
-            onClick={() => setIsAddDialogOpen(true)}
-          >
-            <PlusCircle className="h-4 w-4" />
-            Add Product
-          </Button>
+          {canAddProduct && (
+            <Button 
+              className="flex items-center gap-2"
+              onClick={() => setIsAddDialogOpen(true)}
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add Product
+            </Button>
+          )}
         </div>
         
         <div className="bg-white rounded-lg border shadow-sm">
@@ -209,6 +229,7 @@ const ProductsPage = () => {
         </div>
       </div>
 
+      {/* Add Product Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
