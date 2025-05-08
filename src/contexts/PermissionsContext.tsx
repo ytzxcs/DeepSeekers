@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 
 export interface UserPermissions {
   id: string;
-  user_id: string;
+  user_id: string | null;
   user_name: string;
   edit_product: boolean;
   delete_product: boolean;

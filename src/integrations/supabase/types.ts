@@ -278,6 +278,45 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          add_price_history: boolean
+          add_product: boolean
+          created_at: string
+          delete_price_history: boolean
+          delete_product: boolean
+          edit_price_history: boolean
+          edit_product: boolean
+          id: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          add_price_history?: boolean
+          add_product?: boolean
+          created_at?: string
+          delete_price_history?: boolean
+          delete_product?: boolean
+          edit_price_history?: boolean
+          edit_product?: boolean
+          id?: string
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          add_price_history?: boolean
+          add_product?: boolean
+          created_at?: string
+          delete_price_history?: boolean
+          delete_product?: boolean
+          edit_price_history?: boolean
+          edit_product?: boolean
+          id?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

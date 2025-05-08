@@ -41,27 +41,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Loader2 } from 'lucide-react';
-
-interface UserPermission {
-  id: string;
-  user_id: string;
-  user_name: string;
-  edit_product: boolean;
-  delete_product: boolean;
-  add_product: boolean;
-  edit_price_history: boolean;
-  delete_price_history: boolean;
-  add_price_history: boolean;
-  created_at: string;
-}
+import { UserPermissions } from '@/contexts/PermissionsContext';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<UserPermission[]>([]);
+  const [users, setUsers] = useState<UserPermissions[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserPermission | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserPermissions | null>(null);
   const [newUser, setNewUser] = useState({
     user_name: '',
     edit_product: false,
@@ -234,12 +222,12 @@ const UserManagement = () => {
     }
   };
 
-  const openEditDialog = (user: UserPermission) => {
+  const openEditDialog = (user: UserPermissions) => {
     setSelectedUser({...user});
     setIsEditDialogOpen(true);
   };
 
-  const openDeleteDialog = (user: UserPermission) => {
+  const openDeleteDialog = (user: UserPermissions) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
   };
