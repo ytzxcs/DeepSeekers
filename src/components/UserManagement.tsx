@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -74,7 +75,7 @@ const UserManagement = () => {
         .order('user_name');
 
       if (error) throw error;
-      setUsers(data || []);
+      setUsers(data as UserPermissions[] || []);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({

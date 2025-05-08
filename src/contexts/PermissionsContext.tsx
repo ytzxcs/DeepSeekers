@@ -106,7 +106,7 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
 
-      setPermissions(userPermissions);
+      setPermissions(userPermissions as UserPermissions);
     } catch (error: any) {
       console.error('Error fetching user permissions:', error.message);
       toast({

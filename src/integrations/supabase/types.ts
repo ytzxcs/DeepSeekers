@@ -209,6 +209,33 @@ export type Database = {
         }
         Relationships: []
       }
+      product_audit: {
+        Row: {
+          action: string
+          id: string
+          performed_by: string
+          product_id: string
+          product_name: string
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          id?: string
+          performed_by: string
+          product_id: string
+          product_name: string
+          timestamp?: string
+        }
+        Update: {
+          action?: string
+          id?: string
+          performed_by?: string
+          product_id?: string
+          product_name?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           custno: string | null
@@ -288,6 +315,7 @@ export type Database = {
           edit_price_history: boolean
           edit_product: boolean
           id: string
+          is_admin: boolean
           user_id: string | null
           user_name: string
         }
@@ -300,6 +328,7 @@ export type Database = {
           edit_price_history?: boolean
           edit_product?: boolean
           id?: string
+          is_admin?: boolean
           user_id?: string | null
           user_name: string
         }
@@ -312,6 +341,7 @@ export type Database = {
           edit_price_history?: boolean
           edit_product?: boolean
           id?: string
+          is_admin?: boolean
           user_id?: string | null
           user_name?: string
         }

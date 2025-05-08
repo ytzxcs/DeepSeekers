@@ -48,7 +48,9 @@ const ProductAuditTrail = () => {
         .order('timestamp', { ascending: false });
 
       if (error) throw error;
-      setAuditTrail(data || []);
+      
+      // Properly cast the data to the ProductAudit type
+      setAuditTrail(data as ProductAudit[]);
     } catch (error: any) {
       console.error('Error fetching audit trail:', error);
       toast({
