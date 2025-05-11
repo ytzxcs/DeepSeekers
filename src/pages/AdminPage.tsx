@@ -5,8 +5,7 @@ import ProductAuditTrail from '@/components/ProductAuditTrail';
 const AdminPage = () => {
   return (
     <DashboardLayout>
-      <div className="container mx-auto py-6">
-        <h1 className="text-2xl font-bold mb-6">Admin Product Audit Trail</h1>
+      <div className="container mx-auto py-6 px-4">
         <ProductAuditTrail />
       </div>
     </DashboardLayout>
