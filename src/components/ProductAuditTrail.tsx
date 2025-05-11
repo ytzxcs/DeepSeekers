@@ -17,7 +17,7 @@ interface ProductAudit {
   id: string;
   product_id: string;
   product_name: string;
-  action: 'ADDED' | 'EDITED' | 'DELETED';
+  action: 'ADDED' | 'EDITED' | 'DELETED' | 'RECOVERED';
   performed_by: string;
   timestamp: string;
 }
@@ -25,7 +25,6 @@ interface ProductAudit {
 const ProductAuditTrail = () => {
   const [auditTrail, setAuditTrail] = useState<ProductAudit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserFilter, setCurrentUserFilter] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,22 +55,9 @@ const ProductAuditTrail = () => {
     }
   };
 
-  const filterByUser = (username: string) => {
-    if (currentUserFilter === username) {
-      setCurrentUserFilter(null); // Clear filter if clicking the same user
-    } else {
-      setCurrentUserFilter(username);
-    }
-  };
-
-  // Get unique users for filtering
+  // Get unique users for grouping
   const uniqueUsers = Array.from(new Set(auditTrail.map(item => item.performed_by)));
   
-  // Filter audit trail by user if filter is active
-  const filteredAuditTrail = currentUserFilter
-    ? auditTrail.filter(item => item.performed_by === currentUserFilter)
-    : auditTrail;
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -81,53 +67,61 @@ const ProductAuditTrail = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {uniqueUsers.map(username => (
-        <div key={username} className="space-y-4">
-          <h2 className="text-lg font-bold">
-            Only soft Delete POV {username}
-          </h2>
+        <div key={username} className="border rounded-lg overflow-hidden">
+          <div className="bg-gray-50 p-3 border-b">
+            <h2 className="text-lg font-medium">
+              Only soft Delete POV {username}
+            </h2>
+          </div>
           
-          <Table className="border-collapse border">
+          <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="border font-bold">Product</TableHead>
-                <TableHead className="border font-bold text-red-500">Status</TableHead>
-                <TableHead className="border font-bold">Stamp</TableHead>
+                <TableHead className="w-1/3 font-medium">Product</TableHead>
+                <TableHead className="w-1/3 font-medium text-red-500">Status (Hidden to users)</TableHead>
+                <TableHead className="w-1/3 font-medium">Stamp (hidden to users)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAuditTrail.length === 0 || (currentUserFilter && currentUserFilter !== username) ? (
+              {auditTrail
+                .filter(record => record.performed_by === username)
+                .map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">
+                      {record.product_name}
+                    </TableCell>
+                    <TableCell className={`${
+                      record.action === 'DELETED' ? 'text-red-500' : 
+                      record.action === 'EDITED' ? 'text-blue-500' : 
+                      record.action === 'RECOVERED' ? 'text-amber-500' :
+                      'text-green-500'
+                    }`}>
+                      {record.action}
+                    </TableCell>
+                    <TableCell>
+                      {record.performed_by} {format(new Date(record.timestamp), 'yyyy-MMM-dd HH:mm a')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              {auditTrail.filter(record => record.performed_by === username).length === 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
                     No records found
                   </TableCell>
                 </TableRow>
-              ) : (
-                (currentUserFilter === username || !currentUserFilter ? 
-                  filteredAuditTrail.filter(record => record.performed_by === username) : [])
-                  .map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="border">
-                      {record.product_name}
-                    </TableCell>
-                    <TableCell className={`border ${
-                      record.action === 'DELETED' ? 'text-red-500' : 
-                      record.action === 'EDITED' ? 'text-blue-500' : 
-                      'text-green-500'
-                    }`}>
-                      {record.action}
-                    </TableCell>
-                    <TableCell className="border">
-                      {record.performed_by} {format(new Date(record.timestamp), 'yyyy-MMM-dd HH:mm a')}
-                    </TableCell>
-                  </TableRow>
-                ))
               )}
             </TableBody>
           </Table>
         </div>
       ))}
+      
+      {auditTrail.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          No audit records found in the system
+        </div>
+      )}
     </div>
   );
 };
