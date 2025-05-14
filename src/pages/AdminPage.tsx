@@ -1,12 +1,51 @@
 
+import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProductAuditTrail from '@/components/ProductAuditTrail';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from 'lucide-react';
 
 const AdminPage = () => {
+  const { isAdmin, loading: permissionsLoading } = usePermissions();
+  const [activeTab, setActiveTab] = useState("all");
+  
+  if (permissionsLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="container mx-auto py-6 px-4">
-        <ProductAuditTrail />
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Product Audit Trail</h1>
+          <p className="text-gray-500">
+            {isAdmin 
+              ? "Monitor all product changes with detailed admin information"
+              : "View product status changes"
+            }
+          </p>
+        </div>
+        
+        {isAdmin && (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+            <TabsList>
+              <TabsTrigger value="all">All Changes</TabsTrigger>
+              <TabsTrigger value="by-admin">By Admin</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+        
+        <ProductAuditTrail 
+          isAdminView={isAdmin} 
+          groupByAdmin={isAdmin && activeTab === "by-admin"} 
+        />
       </div>
     </DashboardLayout>
   );
