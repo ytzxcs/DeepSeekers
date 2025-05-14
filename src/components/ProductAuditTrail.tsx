@@ -76,6 +76,24 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
     );
   }
 
+  // Helper function to get status color class
+  const getStatusColorClass = (action: string): string => {
+    if (!isAdminView) return 'text-foreground'; // No colors for regular users
+    
+    switch (action) {
+      case 'DELETED':
+        return 'text-red-500 font-medium';
+      case 'EDITED':
+        return 'text-blue-500 font-medium';
+      case 'RECOVERED':
+        return 'text-amber-500 font-medium';
+      case 'ADDED':
+        return 'text-green-500 font-medium';
+      default:
+        return 'text-foreground';
+    }
+  };
+
   // Standard view for both regular users and admins when not grouping
   if (!groupByAdmin) {
     return (
@@ -100,13 +118,7 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
                     {record.product_name}
                   </TableCell>
                   <TableCell>
-                    <span className={isAdminView ? 
-                      `font-medium ${
-                        record.action === 'DELETED' ? 'text-red-500' : 
-                        record.action === 'EDITED' ? 'text-blue-500' : 
-                        record.action === 'RECOVERED' ? 'text-amber-500' :
-                        'text-green-500'
-                      }` : 'font-medium'}>
+                    <span className={getStatusColorClass(record.action)}>
                       {record.action}
                     </span>
                   </TableCell>
@@ -143,7 +155,7 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
         return (
           <Card key={admin} className="overflow-hidden">
             <CardHeader className="bg-gray-50 border-b">
-              <CardTitle>Actions by {admin}</CardTitle>
+              <CardTitle>Only soft Delete POV {admin}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -161,12 +173,7 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
                         {record.product_name}
                       </TableCell>
                       <TableCell>
-                        <span className={`font-medium ${
-                          record.action === 'DELETED' ? 'text-red-500' : 
-                          record.action === 'EDITED' ? 'text-blue-500' : 
-                          record.action === 'RECOVERED' ? 'text-amber-500' :
-                          'text-green-500'
-                        }`}>
+                        <span className={getStatusColorClass(record.action)}>
                           {record.action}
                         </span>
                       </TableCell>

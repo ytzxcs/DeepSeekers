@@ -39,7 +39,7 @@ const AdminPage = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList>
               <TabsTrigger value="all">All Changes</TabsTrigger>
-              <TabsTrigger value="by-admin">By Admin</TabsTrigger>
+              <TabsTrigger value="by-admin">Group By Admin</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="mt-4">
