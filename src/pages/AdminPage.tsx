@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProductAuditTrail from '@/components/ProductAuditTrail';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -24,7 +24,9 @@ const AdminPage = () => {
     <DashboardLayout>
       <div className="container mx-auto py-6 px-4">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Product Audit Trail</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            {isAdmin ? "Product Audit Trail" : "Product Status History"}
+          </h1>
           <p className="text-gray-500">
             {isAdmin 
               ? "Monitor all product changes with detailed admin information"
@@ -39,13 +41,20 @@ const AdminPage = () => {
               <TabsTrigger value="all">All Changes</TabsTrigger>
               <TabsTrigger value="by-admin">By Admin</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="all" className="mt-4">
+              <ProductAuditTrail isAdminView={true} groupByAdmin={false} />
+            </TabsContent>
+            
+            <TabsContent value="by-admin" className="mt-4">
+              <ProductAuditTrail isAdminView={true} groupByAdmin={true} />
+            </TabsContent>
           </Tabs>
         )}
         
-        <ProductAuditTrail 
-          isAdminView={isAdmin} 
-          groupByAdmin={isAdmin && activeTab === "by-admin"} 
-        />
+        {!isAdmin && (
+          <ProductAuditTrail isAdminView={false} groupByAdmin={false} />
+        )}
       </div>
     </DashboardLayout>
   );

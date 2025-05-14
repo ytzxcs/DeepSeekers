@@ -76,11 +76,12 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
     );
   }
 
+  // Standard view for both regular users and admins when not grouping
   if (!groupByAdmin) {
     return (
       <Card>
         <CardHeader className="bg-gray-50 border-b">
-          <CardTitle>Product Status Changes</CardTitle>
+          <CardTitle>{isAdminView ? "Admin Product Audit Trail" : "Product Status Changes"}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -98,14 +99,16 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
                   <TableCell className="font-medium">
                     {record.product_name}
                   </TableCell>
-                  <TableCell className={isAdminView ? 
-                    `${
-                      record.action === 'DELETED' ? 'text-red-500' : 
-                      record.action === 'EDITED' ? 'text-blue-500' : 
-                      record.action === 'RECOVERED' ? 'text-amber-500' :
-                      'text-green-500'
-                    }` : ''}>
-                    {record.action}
+                  <TableCell>
+                    <span className={isAdminView ? 
+                      `font-medium ${
+                        record.action === 'DELETED' ? 'text-red-500' : 
+                        record.action === 'EDITED' ? 'text-blue-500' : 
+                        record.action === 'RECOVERED' ? 'text-amber-500' :
+                        'text-green-500'
+                      }` : 'font-medium'}>
+                      {record.action}
+                    </span>
                   </TableCell>
                   {isAdminView && (
                     <TableCell>{record.performed_by}</TableCell>
@@ -129,7 +132,7 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
     );
   }
 
-  // Group by admin view
+  // Admin-only view with grouping by admin user
   return (
     <div className="space-y-8">
       {uniqueAdmins.map(admin => {
@@ -140,7 +143,7 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
         return (
           <Card key={admin} className="overflow-hidden">
             <CardHeader className="bg-gray-50 border-b">
-              <CardTitle>Only soft Delete POV {admin}</CardTitle>
+              <CardTitle>Actions by {admin}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -157,13 +160,15 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
                       <TableCell className="font-medium">
                         {record.product_name}
                       </TableCell>
-                      <TableCell className={`${
-                        record.action === 'DELETED' ? 'text-red-500' : 
-                        record.action === 'EDITED' ? 'text-blue-500' : 
-                        record.action === 'RECOVERED' ? 'text-amber-500' :
-                        'text-green-500'
-                      }`}>
-                        {record.action}
+                      <TableCell>
+                        <span className={`font-medium ${
+                          record.action === 'DELETED' ? 'text-red-500' : 
+                          record.action === 'EDITED' ? 'text-blue-500' : 
+                          record.action === 'RECOVERED' ? 'text-amber-500' :
+                          'text-green-500'
+                        }`}>
+                          {record.action}
+                        </span>
                       </TableCell>
                       <TableCell>
                         {format(new Date(record.timestamp), 'yyyy-MMM-dd h:mm a')}
@@ -177,7 +182,7 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
         );
       })}
       
-      {auditTrail.length === 0 && (
+      {uniqueAdmins.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           No audit records found in the system
         </div>
