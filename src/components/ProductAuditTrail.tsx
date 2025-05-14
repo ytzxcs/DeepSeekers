@@ -53,6 +53,9 @@ const ProductAuditTrail = () => {
       setLoading(false);
     }
   };
+
+  // Get unique users for grouping
+  const uniqueUsers = Array.from(new Set(auditTrail.map(item => item.performed_by)));
   
   if (loading) {
     return (
@@ -63,49 +66,59 @@ const ProductAuditTrail = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="border rounded-lg overflow-hidden">
-        <div className="bg-gray-50 p-3 border-b">
-          <h2 className="text-lg font-medium">ADMIN PAGE</h2>
-        </div>
-        
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="font-medium">Product</TableHead>
-              <TableHead className="font-medium text-red-500">Status</TableHead>
-              <TableHead className="font-medium">Stamp</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {auditTrail.map((record) => (
-              <TableRow key={record.id}>
-                <TableCell className="font-medium">
-                  {record.product_name}
-                </TableCell>
-                <TableCell className={`${
-                  record.action === 'DELETED' ? 'text-red-500' : 
-                  record.action === 'EDITED' ? 'text-blue-500' : 
-                  record.action === 'RECOVERED' ? 'text-amber-500' :
-                  'text-green-500'
-                }`}>
-                  {record.action}
-                </TableCell>
-                <TableCell>
-                  {record.performed_by} {format(new Date(record.timestamp), 'yyyy/MMM/dd - h:mm a')}
-                </TableCell>
-              </TableRow>
-            ))}
-            {auditTrail.length === 0 && (
+    <div className="space-y-8">
+      {uniqueUsers.length > 0 && (
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-gray-50 p-3 border-b">
+            <h2 className="text-lg font-medium">
+              Only soft Delete POV Admin
+            </h2>
+          </div>
+          
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
-                  No records found
-                </TableCell>
+                <TableHead className="w-1/3 font-medium">Product</TableHead>
+                <TableHead className="w-1/3 font-medium text-red-500">Status (ACCESIBLE ONLY TO THE ADMIN ONLY)</TableHead>
+                <TableHead className="w-1/3 font-medium">Stamp (ACCESIBLE ONLY TO THE ADMIN ONLY)</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {auditTrail.map((record) => (
+                <TableRow key={record.id}>
+                  <TableCell className="font-medium">
+                    {record.product_name}
+                  </TableCell>
+                  <TableCell className={`${
+                    record.action === 'DELETED' ? 'text-red-500' : 
+                    record.action === 'EDITED' ? 'text-blue-500' : 
+                    record.action === 'RECOVERED' ? 'text-amber-500' :
+                    'text-green-500'
+                  }`}>
+                    {record.action}
+                  </TableCell>
+                  <TableCell>
+                    {record.performed_by} {format(new Date(record.timestamp), 'yyyy-MMM-dd h:mm a')}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {auditTrail.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                    No records found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      
+      {auditTrail.length === 0 && uniqueUsers.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          No audit records found in the system
+        </div>
+      )}
     </div>
   );
 };
