@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut, 
   Menu, 
-  User 
+  User,
+  Users
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       icon: Clock,
       label: 'Price History',
       path: '/price-history',
+    },
+    {
+      icon: Users,
+      label: 'User Management',
+      path: '/user-management',
     },
     {
       icon: Settings,
