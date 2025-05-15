@@ -1,4 +1,10 @@
+
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
+
+export interface PricePoint {
+  date: string;
+  price: number;
+}
 
 export interface Product {
   id: string;
@@ -7,6 +13,13 @@ export interface Product {
   image_url: string;
   price: number;
   created_at: string;
+  // Additional properties needed by components
+  category?: string;
+  priceHistory: PricePoint[];
+  currentPrice: number;
+  updatedAt: string;
+  imageUrl?: string; // alias for image_url for backward compatibility
+  createdAt?: string; // alias for created_at for backward compatibility
 }
 
 export interface PriceAuditLog {

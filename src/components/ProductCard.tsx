@@ -36,11 +36,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
     addSuffix: true 
   });
 
+  const imageUrl = product.imageUrl || product.image_url;
+
   return (
     <Card className="product-card overflow-hidden hover:ring-1 hover:ring-primary/20">
       <div className="aspect-[4/3] overflow-hidden bg-gray-100">
         <img 
-          src={product.imageUrl || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9'} 
+          src={imageUrl || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9'} 
           alt={product.name} 
           className="w-full h-full object-cover transition-transform hover:scale-105 duration-300" 
           onError={(e) => {
