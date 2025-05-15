@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   status: AuthStatus;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, accountType?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -32,7 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (newSession?.user) {
           const { id, email } = newSession.user;
           const name = newSession.user.user_metadata?.name || '';
-          setUser({ id, email: email || '', name });
+          const accountType = newSession.user.user_metadata?.account_type || 'user';
+          setUser({ id, email: email || '', name, accountType });
           setStatus('authenticated');
         } else {
           setUser(null);
@@ -48,7 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (currentSession?.user) {
         const { id, email } = currentSession.user;
         const name = currentSession.user.user_metadata?.name || '';
-        setUser({ id, email: email || '', name });
+        const accountType = currentSession.user.user_metadata?.account_type || 'user';
+        setUser({ id, email: email || '', name, accountType });
         setStatus('authenticated');
       } else {
         setUser(null);
@@ -84,13 +86,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string, accountType: string = 'user') => {
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { name }
+          data: { 
+            name,
+            account_type: accountType
+          }
         }
       });
       

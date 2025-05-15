@@ -18,18 +18,12 @@ const SignupPage = () => {
   return (
     <div className="min-h-screen bg-muted flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Product <span className="text-brand-blue">Management</span>
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Track your products and their price history
-          </p>
-        </div>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Create an Account</CardTitle>
+        <Card className="border-0 shadow-lg">
+          <CardHeader className="text-center pt-8 pb-6">
+            <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Enter your details to create your account
+            </p>
           </CardHeader>
           <CardContent>
             <SignupForm />

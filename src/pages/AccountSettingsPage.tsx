@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ const AccountSettingsPage = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    role: 'user' // Default role
+    accountType: user?.accountType || 'user'
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,11 +67,11 @@ const AccountSettingsPage = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="accountType">Account Type</Label>
                   <Input 
-                    id="role"
-                    name="role"
-                    value={formData.role}
+                    id="accountType"
+                    name="accountType"
+                    value={formData.accountType === 'admin' ? 'Admin' : 'User'}
                     readOnly
                     className="bg-gray-50"
                   />
