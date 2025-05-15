@@ -18,6 +18,7 @@ import { ProductProvider } from "./contexts/ProductContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
 import UserManagementPage from "./pages/UserManagementPage";
 import AdminPage from "./pages/AdminPage";
+import AccountSettingsPage from "./pages/AccountSettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,12 @@ const App = () => (
                 <Route path="/user-management" element={
                   <ProtectedRoute>
                     <UserManagementPage />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/account-settings" element={
+                  <ProtectedRoute>
+                    <AccountSettingsPage />
                   </ProtectedRoute>
                 } />
                 

@@ -58,8 +58,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     },
     {
       icon: Settings,
-      label: 'Settings',
-      path: '/settings',
+      label: 'Account Settings',
+      path: '/account-settings',
     },
   ];
 
