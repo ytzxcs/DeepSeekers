@@ -8,6 +8,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProductsPage from "./pages/ProductsPage";
+import PriceAuditLogPage from "./pages/PriceAuditLogPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -43,6 +44,12 @@ const App = () => (
                 <Route path="/products" element={
                   <ProtectedRoute>
                     <ProductsPage />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/price-audit-log" element={
+                  <ProtectedRoute>
+                    <PriceAuditLogPage />
                   </ProtectedRoute>
                 } />
                 

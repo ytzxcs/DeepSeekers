@@ -48,8 +48,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     },
     {
       icon: Clock,
-      label: 'Price History',
-      path: '/price-history',
+      label: 'Price Audit Log',
+      path: '/price-audit-log',
     },
     {
       icon: Users,
