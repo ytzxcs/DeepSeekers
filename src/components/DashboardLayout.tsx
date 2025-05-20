@@ -15,6 +15,7 @@ import {
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout } = useAuth();
+  const { isAdmin } = usePermissions();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
@@ -51,11 +53,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       label: 'Price Audit Log',
       path: '/price-audit-log',
     },
-    {
+    // Only show User Management for admins
+    ...(isAdmin ? [{
       icon: Users,
       label: 'User Management',
       path: '/user-management',
-    },
+    }] : []),
     {
       icon: Settings,
       label: 'Account Settings',

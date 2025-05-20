@@ -61,9 +61,9 @@ const App = () => (
                 } />
                 
                 <Route path="/user-management" element={
-                  <ProtectedRoute>
+                  <AdminRoute>
                     <UserManagementPage />
-                  </ProtectedRoute>
+                  </AdminRoute>
                 } />
                 
                 <Route path="/account-settings" element={
