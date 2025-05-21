@@ -99,7 +99,7 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
               <TableRow>
                 <TableHead className="w-1/4">Product</TableHead>
                 <TableHead className="w-1/4">Status</TableHead>
-                {isAdminView && <TableHead className="w-1/4">User</TableHead>}
+                {isAdminView && <TableHead className="w-1/4">Performed By</TableHead>}
                 <TableHead className="w-1/4">Timestamp</TableHead>
               </TableRow>
             </TableHeader>

@@ -121,7 +121,7 @@ const ProductAuditPage = () => {
                     <TableRow>
                       <TableHead className="w-1/4">Product</TableHead>
                       <TableHead className="w-1/4">Status</TableHead>
-                      <TableHead className="w-1/4">User</TableHead>
+                      <TableHead className="w-1/4">Performed By</TableHead>
                       <TableHead className="w-1/4">Timestamp</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -167,7 +167,7 @@ const ProductAuditPage = () => {
                 return (
                   <Card key={admin} className="overflow-hidden">
                     <CardHeader className="bg-gray-50 border-b">
-                      <CardTitle>Soft Delete POV: {admin}</CardTitle>
+                      <CardTitle>Product Activity: {admin}</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                       <Table>
