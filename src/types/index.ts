@@ -20,6 +20,7 @@ export interface Product {
   updatedAt: string;
   imageUrl?: string; // alias for image_url for backward compatibility
   createdAt?: string; // alias for created_at for backward compatibility
+  deleted?: boolean; // Flag for soft delete
 }
 
 export interface PriceAuditLog {
@@ -35,4 +36,13 @@ export interface User {
   email: string;
   name?: string;
   accountType?: string;
+}
+
+export interface ProductAudit {
+  id: string;
+  product_id: string;
+  product_name: string;
+  action: 'ADDED' | 'EDITED' | 'DELETED' | 'RECOVERED';
+  performed_by: string;
+  timestamp: string;
 }

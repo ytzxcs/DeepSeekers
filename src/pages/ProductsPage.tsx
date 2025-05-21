@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { PlusCircle, Search, Edit, Trash2, Table2, Grid3X3 } from 'lucide-react';
+import { PlusCircle, Search, Edit, Trash2, Table2, Grid3X3, RefreshCw } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,17 +21,20 @@ import { Separator } from '@/components/ui/separator';
 import { useProducts } from '@/contexts/ProductContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { Switch } from '@/components/ui/switch';
 
 const ProductGrid = ({ 
   products, 
   searchQuery, 
   onEdit, 
-  onDelete 
+  onDelete,
+  showDeleted
 }: { 
   products: any[]; 
   searchQuery: string; 
   onEdit: (product: any) => void; 
-  onDelete: (id: string) => void; 
+  onDelete: (id: string) => void;
+  showDeleted: boolean;
 }) => {
   const { canEditProduct, canDeleteProduct } = usePermissions();
   
@@ -47,13 +50,18 @@ const ProductGrid = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {filteredProducts.map((product) => (
-        <Card key={product.prodcode} className="overflow-hidden">
+        <Card key={product.prodcode} className={`overflow-hidden ${product.deleted ? 'opacity-60 border-dashed' : ''}`}>
           <div className="aspect-square bg-gray-100 relative">
             <img 
               src={`https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=500&h=500&fit=crop`} 
               alt={product.description || product.prodcode}
               className="w-full h-full object-cover"
             />
+            {product.deleted && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <span className="bg-red-500 text-white px-2 py-1 rounded">Deleted</span>
+              </div>
+            )}
           </div>
           <CardContent className="p-4">
             <h3 className="font-semibold mb-1">{product.prodcode}</h3>
@@ -62,16 +70,22 @@ const ProductGrid = ({
             </p>
             <div className="text-sm text-muted-foreground">Unit: {product.unit || 'N/A'}</div>
             <div className="flex space-x-2 mt-3">
-              {canEditProduct && (
+              {canEditProduct && !product.deleted && (
                 <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
                   <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
               )}
-              {canDeleteProduct && (
+              {canDeleteProduct && !product.deleted && (
                 <Button variant="destructive" size="sm" onClick={() => onDelete(product.prodcode)}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   Delete
+                </Button>
+              )}
+              {showDeleted && product.deleted && (
+                <Button variant="outline" size="sm" onClick={() => onEdit(product)} className="bg-green-100">
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Recover
                 </Button>
               )}
             </div>
@@ -86,6 +100,7 @@ const ProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
   const [newProduct, setNewProduct] = useState({
     prodcode: '',
     description: '',
@@ -93,8 +108,10 @@ const ProductsPage = () => {
   });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { toast } = useToast();
-  const { products: contextProducts } = useProducts();
-  const { canAddProduct, canEditProduct, canDeleteProduct } = usePermissions();
+  const { products: contextProducts, getAllProducts } = useProducts();
+  const { canAddProduct, canEditProduct, canDeleteProduct, isAdmin } = usePermissions();
+
+  const displayProducts = getAllProducts(showDeleted);
 
   const handleAddProduct = async () => {
     if (!canAddProduct) {
@@ -189,6 +206,17 @@ const ProductsPage = () => {
                 <Grid3X3 className="h-4 w-4" />
               </Button>
             </div>
+            
+            {isAdmin && (
+              <div className="flex items-center gap-2 ml-4">
+                <Switch 
+                  id="show-deleted" 
+                  checked={showDeleted} 
+                  onCheckedChange={setShowDeleted} 
+                />
+                <Label htmlFor="show-deleted">Show deleted</Label>
+              </div>
+            )}
           </div>
           
           {canAddProduct && (
@@ -215,14 +243,16 @@ const ProductsPage = () => {
               <ProductsTable 
                 searchQuery={searchQuery} 
                 refreshTrigger={refreshTrigger} 
-                onRefresh={() => setRefreshTrigger(prev => prev + 1)} 
+                onRefresh={() => setRefreshTrigger(prev => prev + 1)}
+                showDeleted={showDeleted}
               />
             ) : (
               <ProductGrid 
-                products={contextProducts} 
+                products={displayProducts} 
                 searchQuery={searchQuery} 
                 onEdit={handleEditProduct}
                 onDelete={handleDeleteProduct}
+                showDeleted={showDeleted}
               />
             )}
           </div>

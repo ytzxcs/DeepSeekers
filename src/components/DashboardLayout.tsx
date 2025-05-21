@@ -10,7 +10,8 @@ import {
   LogOut, 
   Menu, 
   User,
-  Users
+  Users,
+  History
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -58,6 +59,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       icon: Users,
       label: 'User Management',
       path: '/user-management',
+    }] : []),
+    // Only show Product Audit for admins
+    ...(isAdmin ? [{
+      icon: History,
+      label: 'Product Audit',
+      path: '/product-audit',
     }] : []),
     {
       icon: Settings,

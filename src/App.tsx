@@ -19,6 +19,7 @@ import { PermissionsProvider } from "./contexts/PermissionsContext";
 import UserManagementPage from "./pages/UserManagementPage";
 import AdminPage from "./pages/AdminPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
+import ProductAuditPage from "./pages/ProductAuditPage";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,12 @@ const App = () => (
                 <Route path="/admin" element={
                   <AdminRoute>
                     <AdminPage />
+                  </AdminRoute>
+                } />
+                
+                <Route path="/product-audit" element={
+                  <AdminRoute>
+                    <ProductAuditPage />
                   </AdminRoute>
                 } />
                 

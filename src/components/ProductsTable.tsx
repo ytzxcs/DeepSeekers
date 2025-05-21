@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Edit, Trash2, RefreshCw } from 'lucide-react';
 import PriceHistoryDialog from './PriceHistoryDialog';
 import { 
   AlertDialog,
@@ -35,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from '@/components/ui/use-toast';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { Badge } from '@/components/ui/badge';
 
 interface ProductWithPrice {
   prodcode: string;
@@ -42,25 +43,29 @@ interface ProductWithPrice {
   unit: string;
   currentPrice: number | null;
   latestPriceDate: string | null;
+  deleted?: boolean;
 }
 
 interface ProductsTableProps {
   searchQuery: string;
   refreshTrigger?: number;
   onRefresh?: () => void;
+  showDeleted?: boolean;
 }
 
-export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: ProductsTableProps) => {
+export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh, showDeleted = false }: ProductsTableProps) => {
   const [products, setProducts] = useState<ProductWithPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithPrice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isRecoverDialogOpen, setIsRecoverDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductWithPrice | null>(null);
   const { toast } = useToast();
-  const { canEditProduct, canDeleteProduct } = usePermissions();
+  const { canEditProduct, canDeleteProduct, isAdmin } = usePermissions();
+  const { user } = useAuth();
   
   const fetchProducts = async () => {
     setLoading(true);
@@ -72,6 +77,7 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
           prodcode,
           description,
           unit,
+          deleted,
           pricehist (
             unitprice,
             effdate
@@ -103,7 +109,8 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
             description: product.description || '',
             unit: product.unit || '',
             currentPrice: latestPrice.unitprice,
-            latestPriceDate: latestPrice.effdate
+            latestPriceDate: latestPrice.effdate,
+            deleted: product.deleted || false,
           };
           
           // Store in map to ensure uniqueness by prodcode
@@ -115,7 +122,8 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
             description: product.description || '',
             unit: product.unit || '',
             currentPrice: null,
-            latestPriceDate: null
+            latestPriceDate: null,
+            deleted: product.deleted || false,
           };
           productMap.set(product.prodcode, productWithPrice);
         }
@@ -139,14 +147,15 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
     fetchProducts();
   }, [refreshTrigger]);
   
-  // Filter products based on search query
+  // Filter products based on search query and deleted status
   const filteredProducts = products.filter(product => {
     const query = searchQuery.toLowerCase();
-    return (
+    const textMatch = (
       product.prodcode.toLowerCase().includes(query) ||
       (product.description && product.description.toLowerCase().includes(query)) ||
       (product.unit && product.unit.toLowerCase().includes(query))
     );
+    return textMatch && (showDeleted || !product.deleted);
   });
   
   // Format price for display
@@ -201,6 +210,22 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
     setSelectedProduct(product);
     setIsDeleteDialogOpen(true);
   };
+  
+  const handleRecoverClick = (e: React.MouseEvent, product: ProductWithPrice) => {
+    if (!isAdmin) {
+      e.stopPropagation();
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to recover products",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    e.stopPropagation(); // Prevent row click handler
+    setSelectedProduct(product);
+    setIsRecoverDialogOpen(true);
+  };
 
   const handleSaveEdit = async () => {
     if (!editingProduct || !canEditProduct) return;
@@ -215,6 +240,18 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
         .eq('prodcode', editingProduct.prodcode);
 
       if (error) throw error;
+      
+      // Log audit event
+      if (user) {
+        await supabase
+          .from('product_audit')
+          .insert({
+            product_id: editingProduct.prodcode,
+            product_name: editingProduct.description || editingProduct.prodcode,
+            action: 'EDITED',
+            performed_by: user.name || user.email
+          });
+      }
 
       toast({
         title: "Success",
@@ -237,25 +274,29 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
     if (!selectedProduct || !canDeleteProduct) return;
 
     try {
-      // First delete price history
-      const { error: priceHistError } = await supabase
-        .from('pricehist')
-        .delete()
-        .eq('prodcode', selectedProduct.prodcode);
-
-      if (priceHistError) throw priceHistError;
-      
-      // Then delete the product
-      const { error: productError } = await supabase
+      // Soft delete - update the deleted flag
+      const { error } = await supabase
         .from('product')
-        .delete()
+        .update({ deleted: true })
         .eq('prodcode', selectedProduct.prodcode);
 
-      if (productError) throw productError;
+      if (error) throw error;
+      
+      // Log audit event
+      if (user) {
+        await supabase
+          .from('product_audit')
+          .insert({
+            product_id: selectedProduct.prodcode,
+            product_name: selectedProduct.description || selectedProduct.prodcode,
+            action: 'DELETED',
+            performed_by: user.name || user.email
+          });
+      }
 
       toast({
         title: "Success",
-        description: "Product deleted successfully"
+        description: "Product marked as deleted"
       });
       
       setIsDeleteDialogOpen(false);
@@ -265,6 +306,47 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
       toast({
         title: "Error",
         description: error.message || "Failed to delete product",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleRecoverProduct = async () => {
+    if (!selectedProduct || !isAdmin) return;
+
+    try {
+      // Recover the product - set deleted flag to false
+      const { error } = await supabase
+        .from('product')
+        .update({ deleted: false })
+        .eq('prodcode', selectedProduct.prodcode);
+
+      if (error) throw error;
+      
+      // Log audit event
+      if (user) {
+        await supabase
+          .from('product_audit')
+          .insert({
+            product_id: selectedProduct.prodcode,
+            product_name: selectedProduct.description || selectedProduct.prodcode,
+            action: 'RECOVERED',
+            performed_by: user.name || user.email
+          });
+      }
+
+      toast({
+        title: "Success",
+        description: "Product recovered successfully"
+      });
+      
+      setIsRecoverDialogOpen(false);
+      fetchProducts();
+      if (onRefresh) onRefresh();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to recover product",
         variant: "destructive"
       });
     }
@@ -302,13 +384,14 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
               <TableHead>Unit</TableHead>
               <TableHead className="text-right">Current Price</TableHead>
               <TableHead className="text-right">Last Updated</TableHead>
+              <TableHead className="text-center">Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
                   No products matching your search
                 </TableCell>
               </TableRow>
@@ -316,7 +399,7 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
               filteredProducts.map((product) => (
                 <TableRow 
                   key={product.prodcode} 
-                  className="cursor-pointer hover:bg-muted"
+                  className={`cursor-pointer hover:bg-muted ${product.deleted ? 'opacity-60' : ''}`}
                   onClick={() => handleProductClick(product)}
                 >
                   <TableCell className="font-medium">{product.prodcode}</TableCell>
@@ -328,9 +411,16 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
                       ? new Date(product.latestPriceDate).toLocaleDateString() 
                       : 'N/A'}
                   </TableCell>
+                  <TableCell className="text-center">
+                    {product.deleted ? (
+                      <Badge variant="destructive">Deleted</Badge>
+                    ) : (
+                      <Badge variant="outline">Active</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
-                      {canEditProduct && (
+                      {canEditProduct && !product.deleted && (
                         <Button 
                           variant="outline" 
                           size="icon"
@@ -339,7 +429,7 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
-                      {canDeleteProduct && (
+                      {canDeleteProduct && !product.deleted && (
                         <Button 
                           variant="outline" 
                           size="icon" 
@@ -347,6 +437,16 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
                           onClick={(e) => handleDeleteClick(e, product)}
                         >
                           <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {isAdmin && product.deleted && (
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="text-green-600 hover:bg-green-600 hover:text-white"
+                          onClick={(e) => handleRecoverClick(e, product)}
+                        >
+                          <RefreshCw className="h-4 w-4" />
                         </Button>
                       )}
                     </div>
@@ -418,8 +518,8 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the product "{selectedProduct?.description || selectedProduct?.prodcode}" and all its price history.
-              This action cannot be undone.
+              This will mark the product "{selectedProduct?.description || selectedProduct?.prodcode}" as deleted.
+              It can be recovered by an admin later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -429,6 +529,28 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh }: Pr
               className="bg-destructive text-destructive-foreground"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Recover Confirmation Dialog */}
+      <AlertDialog open={isRecoverDialogOpen} onOpenChange={setIsRecoverDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Recover Product</AlertDialogTitle>
+            <AlertDialogDescription>
+              Do you want to recover the product "{selectedProduct?.description || selectedProduct?.prodcode}"?
+              This will make it active again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRecoverProduct}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Recover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
