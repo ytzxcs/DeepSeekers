@@ -193,16 +193,19 @@ export type Database = {
       }
       product: {
         Row: {
+          deleted: boolean | null
           description: string | null
           prodcode: string
           unit: string | null
         }
         Insert: {
+          deleted?: boolean | null
           description?: string | null
           prodcode: string
           unit?: string | null
         }
         Update: {
+          deleted?: boolean | null
           description?: string | null
           prodcode?: string
           unit?: string | null

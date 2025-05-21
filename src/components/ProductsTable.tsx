@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -89,7 +90,6 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh, show
       
       // Process the data to get the latest price for each product
       const processedProducts: ProductWithPrice[] = [];
-      const productMap = new Map<string, ProductWithPrice>();
       
       data.forEach(product => {
         // For each product, find the pricehist with the most recent date
@@ -113,8 +113,7 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh, show
             deleted: product.deleted || false,
           };
           
-          // Store in map to ensure uniqueness by prodcode
-          productMap.set(product.prodcode, productWithPrice);
+          processedProducts.push(productWithPrice);
         } else {
           // Product with no price history
           const productWithPrice: ProductWithPrice = {
@@ -125,13 +124,8 @@ export const ProductsTable = ({ searchQuery, refreshTrigger = 0, onRefresh, show
             latestPriceDate: null,
             deleted: product.deleted || false,
           };
-          productMap.set(product.prodcode, productWithPrice);
+          processedProducts.push(productWithPrice);
         }
-      });
-      
-      // Convert map to array
-      Array.from(productMap.values()).forEach(product => {
-        processedProducts.push(product);
       });
       
       setProducts(processedProducts);
