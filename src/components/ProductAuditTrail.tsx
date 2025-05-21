@@ -18,15 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-
-interface ProductAudit {
-  id: string;
-  product_id: string;
-  product_name: string;
-  action: 'ADDED' | 'EDITED' | 'DELETED' | 'RECOVERED';
-  performed_by: string;
-  timestamp: string;
-}
+import { ProductAudit } from '@/types';
 
 interface ProductAuditTrailProps {
   isAdminView?: boolean;
@@ -155,7 +147,7 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
         return (
           <Card key={admin} className="overflow-hidden">
             <CardHeader className="bg-gray-50 border-b">
-              <CardTitle>Only soft Delete POV {admin}</CardTitle>
+              <CardTitle>Product Activity: {admin}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -36,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from '@/components/ui/use-toast';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProductWithPrice {
   prodcode: string;
