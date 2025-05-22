@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const AccountSettingsPage = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, status } = useAuth();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -22,14 +26,58 @@ const AccountSettingsPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would normally update the user information
-    // For now we'll just show a toast notification
-    toast({
-      title: "Success",
-      description: "Your account information has been updated.",
-    });
+    
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update your account.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      // First, update email if changed
+      if (formData.email !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: formData.email,
+        });
+        
+        if (emailError) throw emailError;
+      }
+      
+      // Then, update the user metadata
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { name: formData.name }
+      });
+      
+      if (metadataError) throw metadataError;
+      
+      toast({
+        title: "Success",
+        description: "Your account information has been updated.",
+      });
+
+      // If email was changed, inform the user they need to verify it
+      if (formData.email !== user.email) {
+        toast({
+          title: "Email Verification Required",
+          description: "Please check your inbox to verify your new email address.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update account information.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,6 +100,8 @@ const AccountSettingsPage = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
+                    placeholder="Enter your name"
+                    required
                   />
                 </div>
                 
@@ -63,6 +113,8 @@ const AccountSettingsPage = () => {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
+                    placeholder="Enter your email"
+                    required
                   />
                 </div>
                 
@@ -78,8 +130,20 @@ const AccountSettingsPage = () => {
                 </div>
               </div>
               
-              <div className="mt-6">
-                <Button type="submit">Save changes</Button>
+              <div className="mt-6 flex space-x-4">
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save changes'}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => navigate('/dashboard')}
+                >
+                  Cancel
+                </Button>
               </div>
             </form>
           </CardContent>
