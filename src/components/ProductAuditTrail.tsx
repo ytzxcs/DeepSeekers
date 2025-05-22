@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -78,7 +77,6 @@ const ProductAuditTrail = ({ isAdminView = false, groupByAdmin = false }: Produc
       const { data, error } = await supabase
         .from('product_audit')
         .select('*')
-        .not('performed_by', 'in', ['juan dela cruz', 'maria santos']) // Exclude these users
         .order('timestamp', { ascending: false });
 
       if (error) throw error;
