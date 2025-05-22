@@ -16,6 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import DashboardLayout from '@/components/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
 import PriceHistoryDialog from '@/components/PriceHistoryDialog';
+import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProductWithPrice {
   prodcode: string;
@@ -32,9 +34,49 @@ const PriceAuditLogPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<ProductWithPrice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
   
   useEffect(() => {
     fetchProducts();
+    
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('price-changes')
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'pricehist' 
+        },
+        () => {
+          // Refresh data when price history changes
+          fetchProducts();
+        }
+      )
+      .subscribe();
+      
+    // Also listen for product changes
+    const productChannel = supabase
+      .channel('product-changes')
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'product' 
+        },
+        () => {
+          fetchProducts();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(productChannel);
+    };
   }, []);
   
   const fetchProducts = async () => {
@@ -93,6 +135,11 @@ const PriceAuditLogPage = () => {
     } catch (error: any) {
       console.error('Error fetching products:', error);
       setError(error.message);
+      toast({
+        title: "Error",
+        description: "Failed to fetch products: " + error.message,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -149,6 +196,10 @@ const PriceAuditLogPage = () => {
               className="pl-10"
             />
           </div>
+          <Button onClick={fetchProducts} variant="outline" className="flex items-center gap-2">
+            <Loader2 className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
         
         <div className="bg-white rounded-lg border shadow-sm">
