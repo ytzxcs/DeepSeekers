@@ -14,7 +14,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 // Helper function to set the current user for audit logs
 export const setCurrentUserForAudit = async (userName: string) => {
   try {
-    await supabase.rpc('set_app_user', { user_name: userName });
+    // Use explicit type casting to handle the RPC function call
+    await (supabase.rpc as any)('set_app_user', { user_name: userName });
     return true;
   } catch (error) {
     console.error('Error setting current user for audit:', error);
@@ -25,7 +26,8 @@ export const setCurrentUserForAudit = async (userName: string) => {
 // Reset the current user
 export const resetCurrentUserForAudit = async () => {
   try {
-    await supabase.rpc('reset_app_user');
+    // Use explicit type casting to handle the RPC function call
+    await (supabase.rpc as any)('reset_app_user');
     return true;
   } catch (error) {
     console.error('Error resetting current user for audit:', error);
